@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>ChatApp!</title>
+	<link rel="stylesheet/text" href="style/style.css">
+	<link rel="shortcut icon" href="">
+	<style>
+		body {
+			background: #f9f9f9;
+		}
+
+		#container {
+			width: 700px;
+			margin: 0 auto;
+		}
+
+		#chatWindow {
+			height: 300px;
+		}
+
+		#mainWrapper {
+			display:none;
+		}
+
+		#chatWrapper {
+			float: left;
+			border: 1px #ccc solid;
+			border-radius: 10px;
+			background: #f4f4f4;
+			padding: 10px;
+			height: 350px;
+			overflow-y: scroll;
+			/* position:static; */
+		}
+
+		#userWrapper {
+			float: left;
+			border: 1px #ccc solid;
+			border-radius: 10px;
+			background: #f4f4f4;
+			padding: 10px;
+			margin-left: 20px;
+			width: 150px;
+			max-height: 200px;
+		}
+
+		#namesWrapper {
+		
+			float: left;
+			border: 1px #ccc solid;
+			border-radius: 10px;
+			background: #f4f4f4;
+			padding: 10px;
+			margin-left: 20px;
+		}
+
+		input {
+			height: 30px;
+			border: solid 1px #ccc;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="container">
+		<div id="namesWrapper">
+			<h2>WhatsApp</h2>
+			<p>Create Username:</p>
+			<div id="error" style="color:#ff0000"></div>
+			<form id="usernameForm">
+				<input type="text" size="30" id="username">
+				<input type="submit" value="Submit">
+			</form>
+		</div>
+
+		<div id="mainWrapper">
+			<h2>WhatsApp</h2>
+			<div id="chatWrapper">
+				<div id="chatWindow"></div>
+				<form id="messageForm">
+					<input type="text" size="35" id="message" placeholder="Say Something...">
+					<input type="submit" value="Submit">
+				</form>
+			</div>
+
+			<div id="userWrapper">
+				<div id="users"></div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<!-- <script src="chat.js"> </script>  -->
+
+	<script>
+		// $( ()=>{
+			var socket=io.connect();
+			
+			var message=document.querySelector('#message');
+			var chat=document.querySelector('#chatWindow');
+			var username=document.querySelector('#username');
+
+
+			document.querySelector('#usernameForm').addEventListener('submit', (e)=>{
+				e.preventDefault();
+				// console.log('submitted userNameForm!');
+				// call 'new user' and pass username... 
+				//'(data)' is a callback he will recive data after responding 'new user'
+				// (data) will receive boolean value
+
+				socket.emit('new user', username.value, (data)=>{
+					console.log(username.value,  "data"  , data)
+					if(data){
+						document.querySelector('#namesWrapper').style.display='none'; //Hide user wrapper
+						document.querySelector('#mainWrapper').style.display='block'; //Display main wrapper
+					}else{
+						document.querySelector('#error').innerHTML='username exist!'; // just display message on user wrapper
+					}
+				});
+			});
+
+			socket.on('userNames', (data)=>{
+				var html='';
+				for(i=0; i<data.length; i++){
+					html+=data[i] +"<br>"
+				}
+				document.querySelector('#users').innerHTML=html;
+
+			});
+
+			document.querySelector('#messageForm').addEventListener('submit', (e)=>{
+				e.preventDefault();
+				console.log('Submitted!' ,message);
+				//get message from input element
+				socket.emit('send message' ,message.value);
+				message.value='';
+			});
+
+			socket.on('new message', (data)=>{
+				if(data.user)
+				 return chat.innerHTML +=`<strong> ${data.user} : </strong> ${data.msg} <span style="float:right"> ${data.date} </span> <br>`;
+				 
+				 document.querySelector('#mainWrapper').style.display='none';
+				 document.querySelector('#namesWrapper').style.display='block';
+			});
+		// });
+	</script>
+</body>
+</html>
